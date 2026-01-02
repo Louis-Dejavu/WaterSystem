@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>智慧河道与泵站一体化运维系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #0f172a; color: white; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+    </style>
+</head>
+<body class="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+    <div class="text-center mb-12">
+        <h1 class="text-5xl font-bold tracking-wider mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+            智慧河道与泵站一体化运维系统
+        </h1>
+        <p class="text-slate-400 text-xl">Integrated Operation & Maintenance System for River & Pump Stations</p>
+        <p class="mt-4 text-sm text-slate-500">交叉项目制课程 / 力学高级程序设计</p>
+    </div>
+
+    <div class="flex gap-10">
+        <!-- Web端入口 -->
+        <a href="dashboard.html" target="_blank" class="card transition-all duration-300 bg-slate-700/50 p-8 rounded-2xl border border-slate-600 w-80 text-center cursor-pointer hover:border-blue-500 group">
+            <div class="h-32 flex items-center justify-center mb-6">
+                <svg class="w-20 h-20 text-blue-400 group-hover:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-2 text-white">综合监控驾驶舱</h2>
+            <p class="text-slate-400 text-sm">Web端 · 管理员视图</p>
+            <p class="text-xs text-slate-500 mt-4">GIS地图 / 力学频谱分析 / 水质监测</p>
+        </a>
+
+        <!-- 移动端入口 -->
+        <a href="mobile.html" target="_blank" class="card transition-all duration-300 bg-slate-700/50 p-8 rounded-2xl border border-slate-600 w-80 text-center cursor-pointer hover:border-green-500 group">
+            <div class="h-32 flex items-center justify-center mb-6">
+                <svg class="w-20 h-20 text-green-400 group-hover:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-2 text-white">运维巡检 APP</h2>
+            <p class="text-slate-400 text-sm">移动端 · 运维人员视图</p>
+            <p class="text-xs text-slate-500 mt-4">工单处理 / 扫码报修 / 导航定位</p>
+        </a>
+    </div>
+</body>
+</html>

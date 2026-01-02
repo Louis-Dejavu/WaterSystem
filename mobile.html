@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运维通APP</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex justify-center h-screen overflow-hidden">
+    <!-- 模拟手机外壳 -->
+    <div id="app" class="w-full max-w-md h-full bg-white shadow-2xl flex flex-col relative">
+        
+        <!-- 顶部状态栏 -->
+        <header class="bg-blue-600 text-white p-4 pt-8 shadow-md z-10">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold">河道运维通</h1>
+                    <p class="text-blue-200 text-xs">下午好，张工 (No.8821)</p>
+                </div>
+                <div class="bg-blue-500 p-2 rounded-full relative">
+                    <span class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-blue-600"></span>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                </div>
+            </div>
+        </header>
+
+        <!-- 导航Tab -->
+        <div class="flex border-b border-gray-200 bg-white">
+            <button class="flex-1 p-3 text-blue-600 font-bold border-b-2 border-blue-600">待办任务</button>
+            <button class="flex-1 p-3 text-gray-500">巡检记录</button>
+            <button class="flex-1 p-3 text-gray-500">设备档案</button>
+        </div>
+
+        <!-- 任务列表 (滚动区) -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            
+            <!-- 紧急任务卡片 -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500 relative overflow-hidden" @click="showDetail = true">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded font-bold">紧急</span>
+                    <span class="text-gray-400 text-xs">10分钟前</span>
+                </div>
+                <h3 class="font-bold text-gray-800 text-lg">电机轴承振动异常</h3>
+                <p class="text-gray-500 text-sm mt-1">3号污水提升泵站 - 2号机组</p>
+                <div class="mt-3 flex items-center text-xs text-gray-500 gap-4">
+                    <span class="flex items-center"><span class="w-2 h-2 bg-gray-400 rounded-full mr-1"></span> 距离 1.2km</span>
+                    <span class="text-blue-500 font-bold">查看详情 ></span>
+                </div>
+            </div>
+
+            <!-- 普通任务 -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-400">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded font-bold">例行</span>
+                    <span class="text-gray-400 text-xs">2小时前</span>
+                </div>
+                <h3 class="font-bold text-gray-800">下穿隧道排水口清理</h3>
+                <p class="text-gray-500 text-sm mt-1">成龙路下穿隧道 - A区</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-400">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="bg-green-100 text-green-600 text-xs px-2 py-1 rounded font-bold">绿化</span>
+                    <span class="text-gray-400 text-xs">4小时前</span>
+                </div>
+                <h3 class="font-bold text-gray-800">喷淋设备故障排查</h3>
+                <p class="text-gray-500 text-sm mt-1">锦江河堤 - K12+200</p>
+            </div>
+        </div>
+
+        <!-- 底部详情弹窗 (Mock) -->
+        <div v-if="showDetail" class="absolute inset-0 bg-black/50 z-20 flex items-end" @click.self="showDetail = false">
+            <div class="bg-white w-full h-3/4 rounded-t-2xl p-6 animate-slide-up flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">工单详情 #WO-9921</h2>
+                    <button @click="showDetail = false" class="text-gray-400 text-2xl">×</button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto">
+                    <div class="mb-4">
+                        <label class="text-xs text-gray-400 block">故障诊断 (AI)</label>
+                        <div class="bg-red-50 p-3 rounded text-red-600 text-sm mt-1">
+                            监测到电机外圈特征频率 (BPFO) 幅值超过 ISO 10816 警告线。
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="text-xs text-gray-400 block">建议措施</label>
+                        <ul class="list-disc pl-5 text-sm text-gray-700 mt-1 space-y-1">
+                            <li>携带测振笔进行复核</li>
+                            <li>检查润滑油油质</li>
+                            <li>准备更换 6312 型号轴承</li>
+                        </ul>
+                    </div>
+
+                    <div class="h-40 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 mb-4">
+                        [ 导航地图加载中... ]
+                    </div>
+                </div>
+
+                <button class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold shadow-lg hover:bg-blue-700">
+                    开始处理
+                </button>
+            </div>
+        </div>
+
+        <!-- 底部导航 -->
+        <div class="bg-white border-t p-3 flex justify-around text-xs text-gray-400">
+            <div class="text-center text-blue-600">
+                <div class="text-xl mb-1">🛠</div>
+                首页
+            </div>
+            <div class="text-center">
+                <div class="text-xl mb-1">📷</div>
+                监控
+            </div>
+            <div class="text-center">
+                <div class="text-xl mb-1">👤</div>
+                我的
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .animate-slide-up { animation: slide-up 0.3s ease-out; }
+    </style>
+
+    <script>
+        const { createApp, ref } = Vue;
+        createApp({
+            setup() {
+                const showDetail = ref(false);
+                return { showDetail };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

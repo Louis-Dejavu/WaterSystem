@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>有限元实时仿真分析 - 智慧运维系统</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+        .toolbar-btn { @apply px-3 py-1 text-sm border border-transparent hover:bg-blue-100 hover:border-blue-300 rounded cursor-pointer flex flex-col items-center gap-1; }
+        .panel { @apply bg-white border border-gray-400 shadow-sm; }
+        .panel-header { @apply bg-gradient-to-b from-gray-100 to-gray-300 px-2 py-1 text-xs font-bold border-b border-gray-400 text-gray-700 flex justify-between items-center; }
+        /* 模拟工程软件的网格背景 */
+        .engineering-bg { background-image: radial-gradient(#ccc 1px, transparent 1px); background-size: 20px 20px; }
+    </style>
+</head>
+<body>
+    <div id="app" class="h-screen flex flex-col">
+        
+        <!-- 1. 顶部菜单栏 (仿照参考图) -->
+        <div class="bg-gray-200 border-b border-gray-400 flex items-center px-2 py-1 gap-4 select-none">
+            <div class="text-sm font-bold text-gray-700 mr-4">MechSolver v2.0</div>
+            <div class="flex text-xs gap-3">
+                <span class="cursor-pointer hover:underline">文件(F)</span>
+                <span class="cursor-pointer hover:underline">视图(V)</span>
+                <span class="cursor-pointer hover:underline">网格(M)</span>
+                <span class="cursor-pointer hover:underline">求解(S)</span>
+                <span class="cursor-pointer hover:underline">结果(R)</span>
+                <span class="cursor-pointer hover:underline">帮助(H)</span>
+            </div>
+        </div>
+
+        <!-- 2. 工具栏 (图标) -->
+        <div class="bg-gray-100 border-b border-gray-400 p-1 flex gap-2 shadow-sm z-10">
+            <div class="toolbar-btn" title="导入模型"><i class="fas fa-file-import text-blue-600"></i><span class="text-[10px]">导入</span></div>
+            <div class="toolbar-btn" title="重新划分网格"><i class="fas fa-border-all text-green-600"></i><span class="text-[10px]">网格</span></div>
+            <div class="border-l border-gray-300 mx-1"></div>
+            <div class="toolbar-btn" @click="runSimulation" title="开始计算"><i class="fas fa-play text-green-600"></i><span class="text-[10px]">计算</span></div>
+            <div class="toolbar-btn" title="显示云图"><i class="fas fa-image text-purple-600"></i><span class="text-[10px]">云图</span></div>
+            <div class="border-l border-gray-300 mx-1"></div>
+            <div class="flex items-center gap-2 px-2">
+                <label class="text-xs font-bold text-gray-600">显示网格:</label>
+                <input type="checkbox" v-model="showMesh" @change="updateChart" class="cursor-pointer">
+            </div>
+        </div>
+
+        <!-- 3. 主工作区 -->
+        <div class="flex-1 flex overflow-hidden">
+            
+            <!-- 左侧：模型树 (参考图左侧) -->
+            <div class="w-64 panel flex flex-col z-10">
+                <div class="panel-header"><span>模型结构树</span><i class="fas fa-project-diagram"></i></div>
+                <div class="p-2 overflow-y-auto flex-1 text-sm bg-gray-50">
+                    <ul class="space-y-1">
+                        <li><i class="fas fa-cube text-blue-500 mr-1"></i> <b>泵站机组_03</b></li>
+                        <li class="pl-4">
+                            <i class="fas fa-layer-group text-yellow-600 mr-1"></i> <b>材料 (Materials)</b>
+                            <ul class="pl-4 text-xs text-gray-600 mt-1 border-l border-gray-300 ml-1">
+                                <li class="bg-blue-100 p-1 rounded border border-blue-200">
+                                    <div class="font-bold text-black">45# 钢 (Steel)</div>
+                                    <div>E (模量): <span class="text-blue-700">210 GPa</span></div>
+                                    <div>v (泊松比): <span class="text-blue-700">0.31</span></div>
+                                    <div>ρ (密度): <span class="text-blue-700">7.85 g/cm³</span></div>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="pl-4 mt-2"><i class="fas fa-cog text-gray-500 mr-1"></i> <b>边界条件 (BCs)</b></li>
+                        <li class="pl-4"><i class="fas fa-arrow-down text-red-500 mr-1"></i> <b>载荷 (Loads)</b></li>
+                        <li class="pl-4"><i class="fas fa-th text-green-600 mr-1"></i> <b>网格 (Mesh)</b>
+                            <div class="text-xs text-gray-500 pl-4">单元数: 2,450</div>
+                            <div class="text-xs text-gray-500 pl-4">节点数: 1,280</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 中间：绘图区 (有限元云图) -->
+            <div class="flex-1 relative bg-gray-200 engineering-bg flex flex-col">
+                <!-- 顶部图例说明 -->
+                <div class="absolute top-2 left-2 bg-white/90 p-2 border border-gray-400 text-xs shadow-md z-0 pointer-events-none">
+                    <div class="font-bold border-b border-gray-300 mb-1">分析类型: 静力学分析 (Static)</div>
+                    <div>结果: Von Mises 应力</div>
+                    <div>单位: MPa</div>
+                    <div>最大值: <span class="text-red-600 font-bold">{{ maxStress.toFixed(2) }} MPa</span></div>
+                </div>
+
+                <!-- ECharts 容器 -->
+                <div id="femChart" class="w-full h-full"></div>
+
+                <!-- 坐标轴指示器 (仿工程软件) -->
+                <div class="absolute bottom-4 left-4 w-16 h-16 pointer-events-none">
+                    <div class="w-full h-[1px] bg-red-500 absolute bottom-0"></div> <!-- X -->
+                    <div class="h-full w-[1px] bg-green-500 absolute left-0"></div> <!-- Y -->
+                    <div class="absolute bottom-0 right-0 text-xs font-bold text-red-600">X</div>
+                    <div class="absolute top-0 left-1 text-xs font-bold text-green-600">Y</div>
+                </div>
+            </div>
+
+            <!-- 右侧：属性与控制 -->
+            <div class="w-64 panel flex flex-col border-l z-10">
+                <div class="panel-header"><span>参数控制 (Parameters)</span><i class="fas fa-sliders-h"></i></div>
+                <div class="p-3 bg-gray-50">
+                    
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold text-gray-700 mb-1">电机转速 (RPM)</label>
+                        <input type="range" v-model="rpm" min="0" max="3000" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                        <div class="text-right text-xs font-mono text-blue-600 mt-1">{{ rpm }} r/min</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold text-gray-700 mb-1">负载扭矩 (Torque)</label>
+                        <input type="range" v-model="torque" min="0" max="500" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                        <div class="text-right text-xs font-mono text-blue-600 mt-1">{{ torque }} N·m</div>
+                    </div>
+
+                    <div class="border-t border-gray-300 my-2"></div>
+                    
+                    <div class="text-xs">
+                        <div class="font-bold mb-2 text-gray-700">关键点位移 (Displacement)</div>
+                        <div class="flex justify-between mb-1">
+                            <span>Node A (轴心):</span>
+                            <span class="font-mono text-gray-600">0.002 mm</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Node B (边缘):</span>
+                            <span class="font-mono text-gray-600">{{ (rpm * 0.0001).toFixed(3) }} mm</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel-header border-t"><span>频谱分析 (Vibration)</span></div>
+                <div id="vibrationChart" class="h-40 bg-white"></div>
+            </div>
+        </div>
+
+        <!-- 4. 底部：输出控制台 (仿参考图底部) -->
+        <div class="h-32 panel border-t flex flex-col z-20">
+            <div class="panel-header">
+                <span>消息日志 (Console)</span>
+                <div class="space-x-2">
+                    <span class="cursor-pointer hover:text-blue-600"><i class="fas fa-eraser"></i> 清空</span>
+                    <span class="cursor-pointer hover:text-blue-600"><i class="fas fa-save"></i> 导出</span>
+                </div>
+            </div>
+            <div class="flex-1 bg-black text-green-400 font-mono text-xs p-2 overflow-y-auto" id="consoleLog">
+                <div v-for="(log, index) in logs" :key="index">> {{ log }}</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted, watch } = Vue;
+
+        createApp({
+            setup() {
+                const rpm = ref(1500);
+                const torque = ref(200);
+                const showMesh = ref(true); // 默认显示网格
+                const maxStress = ref(0);
+                const logs = ref([
+                    "[System] MechSolver v2.0 initialized.",
+                    "[System] Loading material library... Done.",
+                    "[System] Device ID: Pump-Station-03 connected.",
+                    "[Data] Receiving telemetry data stream..."
+                ]);
+
+                let femChart = null;
+                let vibChart = null;
+
+                // 生成有限元热力图数据
+                const generateFEMData = (currentRpm, currentTorque) => {
+                    const data = [];
+                    // 模拟一个圆形截面 (泵轴)
+                    for (let x = -10; x <= 10; x += 0.5) {
+                        for (let y = -10; y <= 10; y += 0.5) {
+                            if (x*x + y*y <= 100) {
+                                // 力学公式模拟：应力随半径和转速/扭矩增加
+                                const r = Math.sqrt(x*x + y*y);
+                                const stressBase = (currentRpm / 3000) * 50 + (currentTorque / 500) * 50;
+                                // 模拟应力集中：中心低，边缘高，或者某个点集中
+                                let stress = stressBase * (r / 10) * (1 + Math.random() * 0.1); 
+                                
+                                // 添加一个“故障点”应力集中
+                                const distToFault = Math.sqrt((x - 5)**2 + (y - 5)**2);
+                                if (distToFault < 3) {
+                                    stress += 80 / (distToFault + 1);
+                                }
+
+                                data.push([x, y, stress.toFixed(2)]);
+                            }
+                        }
+                    }
+                    return data;
+                };
+
+                const updateChart = () => {
+                    const data = generateFEMData(rpm.value, torque.value);
+                    const values = data.map(item => parseFloat(item[2]));
+                    maxStress.value = Math.max(...values);
+
+                    const option = {
+                        tooltip: { position: 'top' },
+                        grid: { top: 10, bottom: 10, left: 10, right: 10 },
+                        xAxis: { type: 'value', show: false, min: -11, max: 11 },
+                        yAxis: { type: 'value', show: false, min: -11, max: 11 },
+                        visualMap: {
+                            min: 0,
+                            max: 150,
+                            calculable: true,
+                            orient: 'vertical',
+                            right: 10,
+                            top: 'center',
+                            inRange: {
+                                color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026'] // 经典的彩虹应力色谱
+                            },
+                            text: ['High Stress', 'Low'],
+                            textStyle: { color: '#333' }
+                        },
+                        series: [
+                            {
+                                type: 'heatmap',
+                                data: data,
+                                itemStyle: {
+                                    borderColor: showMesh.value ? '#333' : 'transparent', // 网格线
+                                    borderWidth: showMesh.value ? 0.2 : 0,
+                                    opacity: 0.9
+                                },
+                                progressive: 1000,
+                                animation: false
+                            }
+                        ]
+                    };
+                    femChart.setOption(option);
+                };
+
+                const initVibrationChart = () => {
+                    vibChart = echarts.init(document.getElementById('vibrationChart'));
+                    vibChart.setOption({
+                        grid: { top: 5, bottom: 20, left: 30, right: 5 },
+                        xAxis: { type: 'category', data: ['1X', '2X', '3X', '4X', '5X'], axisLabel: { fontSize: 8 } },
+                        yAxis: { type: 'value', splitLine: { show: false }, axisLabel: { fontSize: 8 } },
+                        series: [{
+                            type: 'bar',
+                            data: [12, 4, 2, 1, 0.5],
+                            itemStyle: { color: '#3b82f6' }
+                        }]
+                    });
+                };
+
+                const runSimulation = () => {
+                    logs.value.push(`[Solver] Solving stiffness matrix K * u = F...`);
+                    logs.value.push(`[Solver] Iteration 1: residual = 0.452`);
+                    setTimeout(() => {
+                        logs.value.push(`[Solver] Iteration 2: residual = 0.021`);
+                        logs.value.push(`[Solver] Converged. Time = 0.12s`);
+                        logs.value.push(`[Result] Updating nodal solutions...`);
+                        
+                        // 滚动到底部
+                        const logDiv = document.getElementById('consoleLog');
+                        setTimeout(() => logDiv.scrollTop = logDiv.scrollHeight, 10);
+                    }, 500);
+                };
+
+                watch([rpm, torque], () => {
+                    updateChart();
+                    // 模拟实时数据流日志
+                    if (Math.random() > 0.7) {
+                        logs.value.push(`[Sensor] RPM updated: ${rpm.value}, recalibrating mesh loads...`);
+                        const logDiv = document.getElementById('consoleLog');
+                        setTimeout(() => logDiv.scrollTop = logDiv.scrollHeight, 10);
+                    }
+                });
+
+                onMounted(() => {
+                    femChart = echarts.init(document.getElementById('femChart'));
+                    updateChart();
+                    initVibrationChart();
+                    
+                    window.addEventListener('resize', () => {
+                        femChart.resize();
+                        vibChart.resize();
+                    });
+                });
+
+                return { rpm, torque, showMesh, maxStress, logs, updateChart, runSimulation };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
